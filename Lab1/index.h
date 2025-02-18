@@ -1,9 +1,27 @@
-#pragma once
+#ifndef INDEX_H
+#define INDEX_H
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <queue>
+
 struct IndexEntry {
-    int id;       // Первинний ключ
-    int position; // Номер запису у файлі (позиція)
+    int id;     // Ключ (team_id або passport_code)
+    int pos;    // Позиція у файлі
 };
-void load_index();
-void save_index();
-void insert_m(int id, const char* name, const char* team_name);
-void insert_s(int passport_code, const char* name, const char* birthdate, const char* team_name);
+
+struct IndexTable {
+    std::queue<int> free_ids;    // Черга звільнених ID для повторного використання
+    std::map<int, int> records;  // Мапа для зберігання ID -> позиція у файлі
+    int counter = 1;             // Автоінкремент ID
+};
+
+void load_index(const char* filename, IndexTable& index);
+void save_index(const char* filename, IndexTable& index);
+int generate_id(IndexTable& index);
+int get_team_id_by_name(const char* team_name);
+
+#endif

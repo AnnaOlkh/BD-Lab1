@@ -127,10 +127,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="insert.cpp" />
+    <ClCompile Include="Command.cpp" />
+    <ClCompile Include="Garbage.cpp" />
+    <ClCompile Include="index.cpp" />
     <ClCompile Include="Lab1.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Command.h" />
+    <ClInclude Include="Garbage.h" />
     <ClInclude Include="index.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="team.h" />

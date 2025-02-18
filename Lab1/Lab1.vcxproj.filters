@@ -18,7 +18,13 @@
     <ClCompile Include="Lab1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="insert.cpp">
+    <ClCompile Include="Garbage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="index.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Command.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -30,6 +36,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="index.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Garbage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Command.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
