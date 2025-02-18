@@ -12,7 +12,6 @@ const char* PLAYER_INDEX_FILE = "Players.ind";
 const char* TEAM_GARBAGE_FILE = "TeamGarbage.bin";
 const char* PLAYER_GARBAGE_FILE = "PlayerGarbage.bin";
 
-// Окремі індексні таблиці для команд і гравців
 IndexTable team_index_table;
 IndexTable player_index_table;
 void insert_m(const char* name, const char* trainer_name)
@@ -61,34 +60,6 @@ void insert_s(const char* name, const char* birthdate, const char* team_name)
     printf("Inserted player record\nPlayer: ID(%d), %s, %s, Team ID: %d\n", player_id, name, birthdate, team_id);
 }
 
-/*void get_m(int team_id) {
-    if (team_index_table.records.find(team_id) == team_index_table.records.end()) {
-        cout << "Error: Team with ID " << team_id << " not found.\n";
-        return;
-    }
-
-    fstream file(MASTER_FILE, ios::binary | ios::in);
-    if (!file) {
-        cout << "Error: Unable to open master file.\n";
-        return;
-    }
-
-    int pos = team_index_table.records[team_id];
-    file.seekg(pos * sizeof(Team), ios::beg);
-
-    Team record;
-    file.read(reinterpret_cast<char*>(&record), sizeof(Team));
-    file.close();
-
-    if (record.is_deleted) {
-        cout << "Error: This team record has been deleted.\n";
-        return;
-    }
-
-    cout << "Team ID: " << record.id << "\n";
-    cout << "Name: " << record.name << "\n";
-    cout << "Trainer: " << record.trainer_name << "\n";
-}*/
 void get_m(int team_id) {
     if (team_index_table.records.find(team_id) == team_index_table.records.end()) {
         cout << "Error: Team with ID " << team_id << " not found.\n";
@@ -109,16 +80,14 @@ void get_m(int team_id) {
     teamFile.close();
 
     if (team.is_deleted) {
-        cout << "Error: This team record has been deleted.\n";
+        cout << "Error: This team record has been _meted.\n";
         return;
     }
 
-    // Вивід інформації про команду
     cout << "Team ID: " << team.id << "\n";
     cout << "Name: " << team.name << "\n";
     cout << "Trainer: " << team.trainer_name << "\n";
 
-    // Вивід гравців цієї команди
     fstream playerFile(SLAVE_FILE, ios::binary | ios::in);
     if (!playerFile) {
         cout << "Error: Unable to open player file.\n";
@@ -180,7 +149,6 @@ void get_s(int player_id) {
 }
 
 void del_s(int player_id) {
-    // Check if the player exists
     if (player_index_table.records.find(player_id) == player_index_table.records.end()) {
         cout << "Error: Player with ID " << player_id << " not found.\n";
         return;
@@ -192,39 +160,21 @@ void del_s(int player_id) {
         return;
     }
 
-    // Get the position of the player record
     int pos = player_index_table.records[player_id];
     file.seekg(pos * sizeof(Player), ios::beg);
 
     Player player;
     file.read(reinterpret_cast<char*>(&player), sizeof(Player));
 
-    // If already deleted, exit
     if (player.is_deleted) {
         cout << "Error: Player is already deleted.\n";
         return;
     }
 
-    // Mark player as deleted
     player.is_deleted = true;
     file.seekp(pos * sizeof(Player), ios::beg);
     file.write(reinterpret_cast<char*>(&player), sizeof(Player));
 
-    // Move last record to this position
-    int last_pos = (player_index_table.records.size() - 1) * sizeof(Player);
-    if (pos != last_pos) {
-        file.seekg(last_pos, ios::beg);
-        Player last_player;
-        file.read(reinterpret_cast<char*>(&last_player), sizeof(Player));
-
-        file.seekp(pos * sizeof(Player), ios::beg);
-        file.write(reinterpret_cast<char*>(&last_player), sizeof(Player));
-
-        // Update index
-        player_index_table.records[last_player.passport_code] = pos;
-    }
-
-    // Remove from index and add to garbage queue
     player_index_table.records.erase(player_id);
     player_index_table.free_ids.push(player_id);
 
@@ -235,72 +185,68 @@ void del_s(int player_id) {
     cout << "Player ID " << player_id << " has been deleted.\n";
 }
 void del_m(int team_id) {
-    // Check if the team exists
     if (team_index_table.records.find(team_id) == team_index_table.records.end()) {
         cout << "Error: Team with ID " << team_id << " not found.\n";
         return;
     }
 
-    fstream file(MASTER_FILE, ios::binary | ios::in | ios::out);
-    if (!file) {
-        cout << "Error: Unable to open master file.\n";
+    fstream teamsData(MASTER_FILE, ios::binary | ios::in | ios::out);
+    if (!teamsData) {
+        cout << "Error: Unable to open teams file.\n";
         return;
     }
 
-    // Get the position of the team record
     int pos = team_index_table.records[team_id];
-    file.seekg(pos * sizeof(Team), ios::beg);
+    teamsData.seekg(pos * sizeof(Team), ios::beg);
 
     Team team;
-    file.read(reinterpret_cast<char*>(&team), sizeof(Team));
+    teamsData.read(reinterpret_cast<char*>(&team), sizeof(Team));
 
-    // If already deleted, exit
     if (team.is_deleted) {
-        cout << "Error: Team is already deleted.\n";
+        cout << "Error: This team record has been deleted.\n";
         return;
     }
 
-    // Delete all players associated with this team
+    fstream playersData(SLAVE_FILE, ios::binary | ios::in | ios::out);
+    if (!playersData) {
+        cout << "Error: Unable to open players file.\n";
+        return;
+    }
+
     vector<int> players_to_delete;
+
     for (const auto& entry : player_index_table.records) {
-        if (entry.second == team.id) {
-            players_to_delete.push_back(entry.first);
+        int player_pos = entry.second;
+        playersData.seekg(player_pos * sizeof(Player), ios::beg);
+
+        Player player;
+        playersData.read(reinterpret_cast<char*>(&player), sizeof(Player));
+
+        if (!player.is_deleted && player.team_id == team_id) {
+            players_to_delete.push_back(player.passport_code);
         }
     }
+
+    playersData.close();
 
     for (int player_id : players_to_delete) {
         del_s(player_id);
     }
-
-    // Mark team as deleted
     team.is_deleted = true;
-    file.seekp(pos * sizeof(Team), ios::beg);
-    file.write(reinterpret_cast<char*>(&team), sizeof(Team));
+    teamsData.seekp(pos * sizeof(Team), ios::beg);
+    teamsData.write(reinterpret_cast<char*>(&team), sizeof(Team));
 
-    // Move last record to this position
-    int last_pos = (team_index_table.records.size() - 1) * sizeof(Team);
-    if (pos != last_pos) {
-        file.seekg(last_pos, ios::beg);
-        Team last_team;
-        file.read(reinterpret_cast<char*>(&last_team), sizeof(Team));
-
-        file.seekp(pos * sizeof(Team), ios::beg);
-        file.write(reinterpret_cast<char*>(&last_team), sizeof(Team));
-
-        // Update index
-        team_index_table.records[last_team.id] = pos;
-    }
-
-    // Remove from index and add to garbage queue
     team_index_table.records.erase(team_id);
     team_index_table.free_ids.push(team_id);
 
-    file.close();
+    teamsData.close();
     save_index(TEAM_INDEX_FILE, team_index_table);
     save_trash(TEAM_GARBAGE_FILE, team_index_table.free_ids);
 
-    cout << "Team ID " << team_id << " has been deleted.\n";
+    cout << "Team ID " << team_id << " and all its players have been deleted.\n";
 }
+
+
 
 void ut_m() {
     fstream file(MASTER_FILE, ios::binary | ios::in);
@@ -347,20 +293,17 @@ void update_m(int team_id, const std::string& field, const std::string& new_valu
         return;
     }
 
-    // Знаходимо позицію команди у файлі
     int pos = team_index_table.records[team_id];
     file.seekg(pos * sizeof(Team), ios::beg);
 
     Team record;
     file.read(reinterpret_cast<char*>(&record), sizeof(Team));
 
-    // Перевірка чи запис не видалений
     if (record.is_deleted) {
         cout << "Error: This team record has been deleted.\n";
         return;
     }
 
-    // Оновлення відповідного поля
     if (field == "name") {
         strncpy_s(record.name, new_value.c_str(), sizeof(record.name) - 1);
     }
@@ -372,7 +315,6 @@ void update_m(int team_id, const std::string& field, const std::string& new_valu
         return;
     }
 
-    // Запис зміненого запису назад у файл
     file.seekp(pos * sizeof(Team), ios::beg);
     file.write(reinterpret_cast<char*>(&record), sizeof(Team));
     file.close();
@@ -392,20 +334,17 @@ void update_s(int player_id, const std::string& field, const std::string& new_va
         return;
     }
 
-    // Знаходимо позицію гравця у файлі
     int pos = player_index_table.records[player_id];
     file.seekg(pos * sizeof(Player), ios::beg);
 
     Player record;
     file.read(reinterpret_cast<char*>(&record), sizeof(Player));
 
-    // Перевірка чи запис не видалений
     if (record.is_deleted) {
         cout << "Error: This player record has been deleted.\n";
         return;
     }
 
-    // Оновлення відповідного поля
     if (field == "name") {
         strncpy_s(record.name, new_value.c_str(), sizeof(record.name) - 1);
     }
@@ -417,7 +356,6 @@ void update_s(int player_id, const std::string& field, const std::string& new_va
         return;
     }
 
-    // Запис зміненого запису назад у файл
     file.seekp(pos * sizeof(Player), ios::beg);
     file.write(reinterpret_cast<char*>(&record), sizeof(Player));
     file.close();
@@ -462,7 +400,7 @@ void calc_m() {
 
     Team team;
     while (teamFile.read(reinterpret_cast<char*>(&team), sizeof(Team))) {
-        if (team.is_deleted) continue;  // Пропускаємо видалені команди
+        if (team.is_deleted) continue;
 
         total_teams++;
         int team_players_count = 0;
@@ -495,4 +433,21 @@ void initialize()
     load_index(PLAYER_INDEX_FILE, player_index_table);
     load_trash(TEAM_GARBAGE_FILE, team_index_table.free_ids);
     load_trash(PLAYER_GARBAGE_FILE, player_index_table.free_ids);
+}
+void help() {
+    cout << "\nAVAILABLE COMMANDS\n";
+    cout << "insert-m    - Add a new team (name, trainer)\n";
+    cout << "insert-s    - Add a new player (name, birthdate, team)\n";
+    cout << "get-m       - Get team details by ID (including players)\n";
+    cout << "get-s       - Get player details by ID\n";
+    cout << "del-m       - Delete a team by ID (removes all its players too)\n";
+    cout << "del-s       - Delete a player by ID\n";
+    cout << "ut-m        - Show all teams (including deleted ones)\n";
+    cout << "ut-s        - Show all players (including deleted ones)\n";
+    cout << "calc-m      - Count all teams and display number of players per team\n";
+    cout << "calc-s      - Count total number of players\n";
+    cout << "update-m    - Update a team's field (name/trainer)\n";
+    cout << "update-s    - Update a player's field (name/birthdate)\n";
+    cout << "help        - Show this help menu\n";
+    cout << "exit        - Exit the program\n";
 }

@@ -51,5 +51,5 @@ int get_team_id_by_name(const char* team_name) {
             return team.id;
         }
     }
-    return -1; // Команда не знайдена
+    return -1;
 }

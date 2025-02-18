@@ -14,3 +14,4 @@ void update_m(int team_id, const std::string& field, const std::string& new_valu
 void update_s(int player_id, const std::string& field, const std::string& new_value);
 void calc_s();
 void calc_m();
+void help();

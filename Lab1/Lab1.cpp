@@ -9,7 +9,7 @@ using namespace std;
 
 int main()
 {
-    initialize();  // Load index and garbage data
+    initialize();
 
     string command;
     while (true)
@@ -33,7 +33,7 @@ int main()
             char name[50], birthdate[10], team[50];
             cin >> ws;
             cin.getline(name, 50);
-            cin.getline(birthdate, 10);
+            cin.getline(birthdate, 11);
             cin.getline(team, 50);
             insert_s(name, birthdate, team);
         }
@@ -72,14 +72,19 @@ int main()
         else if (command == "update-m") {
             int team_id;
             string field, new_value;
+            cout << "Print team's id, field you want to update and new value\n";
             cin >> team_id >> field >> new_value;
             update_m(team_id, field, new_value);
         }
         else if (command == "update-s") {
             int player_id;
             string field, new_value;
+            cout << "Print team's id, field you want to update and new value\n";
             cin >> player_id >> field >> new_value;
             update_s(player_id, field, new_value);
+        }
+        else if (command == "help") {
+            help();
         }
         else {
             cout << "Unknown command.\n";

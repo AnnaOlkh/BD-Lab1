@@ -9,14 +9,14 @@
 #include <queue>
 
 struct IndexEntry {
-    int id;     // Ключ (team_id або passport_code)
-    int pos;    // Позиція у файлі
+    int id;
+    int pos;
 };
 
 struct IndexTable {
-    std::queue<int> free_ids;    // Черга звільнених ID для повторного використання
-    std::map<int, int> records;  // Мапа для зберігання ID -> позиція у файлі
-    int counter = 1;             // Автоінкремент ID
+    std::queue<int> free_ids;
+    std::map<int, int> records;  
+    int counter = 1;             
 };
 
 void load_index(const char* filename, IndexTable& index);
