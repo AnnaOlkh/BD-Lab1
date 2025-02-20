@@ -48,8 +48,10 @@ int get_team_id_by_name(const char* team_name) {
     Team team;
     while (file.read(reinterpret_cast<char*>(&team), sizeof(Team))) {
         if (strcmp(team.name, team_name) == 0 && !team.is_deleted) {
+            file.close();
             return team.id;
         }
     }
+    file.close();
     return -1;
 }
